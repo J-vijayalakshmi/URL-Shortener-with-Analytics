@@ -1,0 +1,611 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>LinkSnip - Professional URL Shortener</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      background: linear-gradient(135deg, #1e3c72 0%, #2a5298 50%, #7e8ba3 100%);
+      min-height: 100vh;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      padding: 20px;
+      position: relative;
+      overflow-x: hidden;
+    }
+
+    body::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23ffffff' fill-opacity='0.03'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
+      pointer-events: none;
+    }
+
+    .container {
+      background: rgba(255, 255, 255, 0.98);
+      backdrop-filter: blur(10px);
+      border-radius: 24px;
+      padding: 50px;
+      box-shadow: 0 25px 80px rgba(0, 0, 0, 0.25), 0 0 1px rgba(0, 0, 0, 0.1);
+      max-width: 680px;
+      width: 100%;
+      position: relative;
+      border: 1px solid rgba(255, 255, 255, 0.3);
+    }
+
+    .logo {
+      text-align: center;
+      margin-bottom: 10px;
+    }
+
+    .logo svg {
+      width: 50px;
+      height: 50px;
+      margin-bottom: 10px;
+    }
+
+    h1 {
+      color: #1a202c;
+      text-align: center;
+      margin-bottom: 8px;
+      font-size: 2.5em;
+      font-weight: 700;
+      letter-spacing: -0.02em;
+    }
+
+    .subtitle {
+      text-align: center;
+      color: #718096;
+      font-size: 1.05em;
+      margin-bottom: 40px;
+      font-weight: 400;
+    }
+
+    .subtitle {
+      text-align: center;
+      color: #718096;
+      font-size: 1.05em;
+      margin-bottom: 40px;
+      font-weight: 400;
+    }
+
+    .input-group {
+      margin-bottom: 25px;
+      position: relative;
+    }
+
+    label {
+      display: block;
+      margin-bottom: 10px;
+      color: #2d3748;
+      font-weight: 600;
+      font-size: 0.95em;
+      letter-spacing: 0.01em;
+    }
+
+    .input-wrapper {
+      position: relative;
+    }
+
+    input[type="text"] {
+      width: 100%;
+      padding: 16px;
+      border: 2px solid #e2e8f0;
+      border-radius: 12px;
+      font-size: 16px;
+      transition: all 0.3s ease;
+      background: #f7fafc;
+      font-family: inherit;
+    }
+
+    input[type="text"]:focus {
+      outline: none;
+      border-color: #4299e1;
+      background: white;
+      box-shadow: 0 0 0 4px rgba(66, 153, 225, 0.1);
+    }
+
+    input[type="text"]::placeholder {
+      color: #cbd5e0;
+    }
+
+    .btn-primary {
+      width: 100%;
+      padding: 16px;
+      background: linear-gradient(135deg, #4299e1 0%, #3182ce 100%);
+      color: white;
+      border: none;
+      border-radius: 12px;
+      font-size: 16px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      margin-top: 10px;
+      box-shadow: 0 4px 14px rgba(66, 153, 225, 0.4);
+      position: relative;
+      overflow: hidden;
+    }
+
+    .btn-primary:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 6px 20px rgba(66, 153, 225, 0.5);
+    }
+
+    .btn-primary:active {
+      transform: translateY(0);
+    }
+
+    .btn-secondary {
+      width: 100%;
+      padding: 14px;
+      background: white;
+      color: #4299e1;
+      border: 2px solid #4299e1;
+      border-radius: 12px;
+      font-size: 15px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      margin-top: 12px;
+    }
+
+    .btn-secondary:hover {
+      background: #ebf8ff;
+      transform: translateY(-1px);
+    }
+
+    .result {
+      margin-top: 35px;
+      padding: 28px;
+      background: linear-gradient(135deg, #ebf8ff 0%, #e6fffa 100%);
+      border-radius: 16px;
+      display: none;
+      border: 1px solid #bee3f8;
+    }
+
+    .result.show {
+      display: block;
+      animation: slideIn 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+
+    @keyframes slideIn {
+      from {
+        opacity: 0;
+        transform: translateY(-20px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    .result h3 {
+      color: #2d3748;
+      margin-bottom: 18px;
+      font-size: 1.15em;
+      font-weight: 600;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .url-box {
+      display: flex;
+      gap: 12px;
+      margin-bottom: 12px;
+      align-items: stretch;
+    }
+
+    .url-display {
+      flex: 1;
+      padding: 14px 18px;
+      background: white;
+      border: 2px solid #4299e1;
+      border-radius: 10px;
+      color: #2b6cb0;
+      font-weight: 600;
+      word-break: break-all;
+      font-size: 15px;
+      display: flex;
+      align-items: center;
+    }
+
+    .copy-btn {
+      padding: 14px 24px;
+      background: #4299e1;
+      color: white;
+      border: none;
+      border-radius: 10px;
+      cursor: pointer;
+      font-weight: 600;
+      width: auto;
+      margin: 0;
+      transition: all 0.3s ease;
+      box-shadow: 0 2px 8px rgba(66, 153, 225, 0.3);
+      white-space: nowrap;
+    }
+
+    .copy-btn:hover {
+      background: #3182ce;
+      transform: translateY(-1px);
+      box-shadow: 0 4px 12px rgba(66, 153, 225, 0.4);
+    }
+
+    .analytics {
+      margin-top: 35px;
+      padding: 28px;
+      background: white;
+      border-radius: 16px;
+      display: none;
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+      border: 1px solid #e2e8f0;
+    }
+
+    .analytics.show {
+      display: block;
+      animation: slideIn 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+
+    .analytics h3 {
+      color: #2d3748;
+      margin-bottom: 20px;
+      font-size: 1.3em;
+      font-weight: 700;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .stat-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 18px;
+      margin: 24px 0;
+    }
+
+    .stat-card {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      padding: 24px;
+      border-radius: 14px;
+      text-align: center;
+      box-shadow: 0 4px 14px rgba(102, 126, 234, 0.3);
+      border: 1px solid rgba(255, 255, 255, 0.18);
+      transition: transform 0.3s ease;
+    }
+
+    .stat-card:hover {
+      transform: translateY(-4px);
+    }
+
+    .stat-value {
+      font-size: 2.5em;
+      font-weight: 700;
+      color: white;
+      text-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    }
+
+    .stat-label {
+      color: rgba(255, 255, 255, 0.9);
+      margin-top: 8px;
+      font-weight: 500;
+      font-size: 0.95em;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+
+    .stat-label {
+      color: rgba(255, 255, 255, 0.9);
+      margin-top: 8px;
+      font-weight: 500;
+      font-size: 0.95em;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+
+    .section-title {
+      color: #2d3748;
+      margin: 28px 0 16px;
+      font-size: 1.1em;
+      font-weight: 600;
+    }
+
+    .click-list {
+      max-height: 340px;
+      overflow-y: auto;
+      margin-top: 18px;
+    }
+
+    .click-list::-webkit-scrollbar {
+      width: 8px;
+    }
+
+    .click-list::-webkit-scrollbar-track {
+      background: #f1f1f1;
+      border-radius: 10px;
+    }
+
+    .click-list::-webkit-scrollbar-thumb {
+      background: #cbd5e0;
+      border-radius: 10px;
+    }
+
+    .click-list::-webkit-scrollbar-thumb:hover {
+      background: #a0aec0;
+    }
+
+    .click-item {
+      background: #f7fafc;
+      padding: 16px 18px;
+      border-radius: 12px;
+      margin-bottom: 12px;
+      font-size: 14px;
+      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+      border: 1px solid #e2e8f0;
+      transition: all 0.2s ease;
+    }
+
+    .click-item:hover {
+      background: #edf2f7;
+      transform: translateX(4px);
+    }
+
+    .click-item strong {
+      color: #4299e1;
+      display: block;
+      margin-bottom: 6px;
+      font-weight: 600;
+    }
+
+    .click-item div {
+      color: #4a5568;
+      line-height: 1.6;
+    }
+
+    .error {
+      background: linear-gradient(135deg, #fed7d7 0%, #feb2b2 100%);
+      color: #742a2a;
+      padding: 14px 18px;
+      border-radius: 12px;
+      margin-top: 18px;
+      display: none;
+      border: 1px solid #fc8181;
+      font-weight: 500;
+    }
+
+    .error.show {
+      display: block;
+      animation: shake 0.5s ease;
+    }
+
+    @keyframes shake {
+      0%, 100% { transform: translateX(0); }
+      25% { transform: translateX(-8px); }
+      75% { transform: translateX(8px); }
+    }
+
+    .footer {
+      text-align: center;
+      margin-top: 32px;
+      padding-top: 24px;
+      border-top: 1px solid #e2e8f0;
+      color: #718096;
+      font-size: 0.9em;
+    }
+
+    @media (max-width: 640px) {
+      .container {
+        padding: 30px 24px;
+      }
+
+      h1 {
+        font-size: 2em;
+      }
+
+      .stat-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .url-box {
+        flex-direction: column;
+      }
+
+      .copy-btn {
+        width: 100%;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="logo">
+      <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <path d="M10 13C10.4295 13.5741 10.9774 14.0491 11.6066 14.3929C12.2357 14.7367 12.9315 14.9411 13.6467 14.9923C14.3618 15.0435 15.0796 14.9403 15.7513 14.6897C16.4231 14.4392 17.0331 14.047 17.54 13.54L20.54 10.54C21.4508 9.59695 21.9548 8.33394 21.9434 7.02296C21.932 5.71198 21.4061 4.45791 20.4791 3.53087C19.5521 2.60383 18.298 2.07799 16.987 2.0666C15.676 2.05521 14.413 2.55918 13.47 3.47L11.75 5.18" stroke="#4299E1" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+        <path d="M14 11C13.5705 10.4259 13.0226 9.9509 12.3934 9.60711C11.7642 9.26331 11.0685 9.05889 10.3533 9.00768C9.63816 8.95646 8.92037 9.05965 8.24861 9.31023C7.57685 9.5608 6.96684 9.95303 6.45996 10.46L3.45996 13.46C2.54917 14.403 2.04519 15.6661 2.05659 16.977C2.06798 18.288 2.59382 19.5421 3.52086 20.4691C4.4479 21.3962 5.70197 21.922 7.01295 21.9334C8.32393 21.9448 9.58694 21.4408 10.53 20.53L12.24 18.82" stroke="#4299E1" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+      </svg>
+    </div>
+    
+    <h1>LinkSnip</h1>
+    <p class="subtitle">Shorten links. Track performance. Grow your reach.</p>
+    
+    <div class="input-group">
+      <label for="originalUrl">Enter URL to shorten</label>
+      <div class="input-wrapper">
+        <input type="text" id="originalUrl" placeholder="https://example.com/your-very-long-url-here">
+      </div>
+    </div>
+    
+    <button class="btn-primary" onclick="shortenUrl()">Shorten URL</button>
+    
+    <div class="error" id="error"></div>
+    
+    <div class="result" id="result">
+      <h3>Your shortened link is ready!</h3>
+      <div class="url-box">
+        <div class="url-display" id="shortUrl"></div>
+        <button class="copy-btn" onclick="copyUrl(event)">Copy</button>
+      </div>
+      <button class="btn-secondary" onclick="viewAnalytics()">View Analytics</button>
+    </div>
+
+    <div class="analytics" id="analytics">
+      <h3>Analytics Dashboard</h3>
+      <div class="stat-grid">
+        <div class="stat-card">
+          <div class="stat-value" id="totalClicks">0</div>
+          <div class="stat-label">Total Clicks</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-value" id="createdDate">-</div>
+          <div class="stat-label">Created On</div>
+        </div>
+      </div>
+      <h4 class="section-title">Recent Clicks</h4>
+      <div class="click-list" id="clickList"></div>
+    </div>
+
+    <div class="footer">
+      Powered by Node.js & MongoDB
+    </div>
+  </div>
+
+  <script>
+    let currentShortCode = '';
+
+    async function shortenUrl() {
+      const originalUrl = document.getElementById('originalUrl').value;
+      const errorDiv = document.getElementById('error');
+      const resultDiv = document.getElementById('result');
+      
+      if (!originalUrl) {
+        showError('Please enter a URL');
+        return;
+      }
+
+      try {
+        const response = await fetch('/api/shorten', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({ originalUrl })
+        });
+
+        const data = await response.json();
+
+        if (response.ok) {
+          document.getElementById('shortUrl').textContent = data.shortUrl;
+          currentShortCode = data.shortCode;
+          resultDiv.classList.add('show');
+          errorDiv.classList.remove('show');
+          document.getElementById('analytics').classList.remove('show');
+        } else {
+          showError(data.error || 'Something went wrong');
+        }
+      } catch (error) {
+        showError('Failed to shorten URL. Make sure the server is running.');
+      }
+    }
+
+    function copyUrl(event) {
+      const shortUrl = document.getElementById('shortUrl').textContent;
+      navigator.clipboard.writeText(shortUrl).then(() => {
+        const btn = event.target;
+        const originalText = btn.textContent;
+        btn.textContent = 'Copied!';
+        btn.style.background = '#48bb78';
+        setTimeout(() => {
+          btn.textContent = originalText;
+          btn.style.background = '#4299e1';
+        }, 2000);
+      }).catch(() => {
+        showError('Failed to copy. Please copy manually.');
+      });
+    }
+
+    async function viewAnalytics() {
+      if (!currentShortCode) return;
+
+      try {
+        const response = await fetch(`/api/analytics/${currentShortCode}`);
+        const data = await response.json();
+
+        if (response.ok) {
+          document.getElementById('totalClicks').textContent = data.clicks;
+          
+          const createdDate = new Date(data.createdAt);
+          const formattedCreated = createdDate.toLocaleDateString('en-US', { 
+            month: 'short', 
+            day: 'numeric' 
+          });
+          document.getElementById('createdDate').textContent = formattedCreated;
+
+          const clickList = document.getElementById('clickList');
+          clickList.innerHTML = '';
+
+          if (data.clickDetails.length > 0) {
+            data.clickDetails.reverse().slice(0, 10).forEach(click => {
+              const clickItem = document.createElement('div');
+              clickItem.className = 'click-item';
+              const date = new Date(click.timestamp);
+              const formattedDate = date.toLocaleDateString('en-US', { 
+                month: 'short', 
+                day: 'numeric', 
+                year: 'numeric' 
+              });
+              const formattedTime = date.toLocaleTimeString('en-US', { 
+                hour: '2-digit', 
+                minute: '2-digit' 
+              });
+              
+              clickItem.innerHTML = `
+                <strong>${formattedDate} at ${formattedTime}</strong>
+                <div>
+                  <span style="display: inline-block; margin-right: 15px;">IP: ${click.ip}</span>
+                  <span>Referer: ${click.referer}</span>
+                </div>
+              `;
+              clickList.appendChild(clickItem);
+            });
+          } else {
+            clickList.innerHTML = '<div class="click-item" style="text-align: center; color: #a0aec0;">No clicks yet. Share your link to see analytics!</div>';
+          }
+
+          document.getElementById('analytics').classList.add('show');
+        }
+      } catch (error) {
+        showError('Failed to load analytics');
+      }
+    }
+
+    function showError(message) {
+      const errorDiv = document.getElementById('error');
+      errorDiv.textContent = message;
+      errorDiv.classList.add('show');
+      setTimeout(() => {
+        errorDiv.classList.remove('show');
+      }, 3000);
+    }
+
+    // Allow pressing Enter to shorten URL
+    document.getElementById('originalUrl').addEventListener('keypress', (e) => {
+      if (e.key === 'Enter') {
+        shortenUrl();
+      }
+    });
+  </script>
+</body>
+</html>
