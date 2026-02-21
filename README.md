@@ -46,8 +46,9 @@ BASE_URL=http://localhost:3000
 ```
 
 **If using MongoDB Atlas (cloud database):**
-- Replace `MONGODB_URI` with your connection string
-- Example: `MONGODB_URI=mongodb+srv://username:password@cluster.mongodb.net/url-shortener`
+- Replace `MONGODB_URI` with your connection string from MongoDB Atlas
+- Example format: `MONGODB_URI=mongodb+srv://<USERNAME>:<PASSWORD>@<CLUSTER>.mongodb.net/url-shortener`
+- Get your connection string from: MongoDB Atlas → Clusters → Connect → Connect your application
 
 ### Step 3: Start MongoDB (if using local)
 
