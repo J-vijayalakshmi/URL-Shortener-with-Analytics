@@ -21,7 +21,27 @@ const urlSchema = new mongoose.Schema({
     },
     ip: String,
     userAgent: String,
-    referer: String
+    referer: String,
+    // Advanced analytics
+    device: {
+      type: { type: String }, // Explicitly define 'type' field
+      model: String,
+      vendor: String
+    },
+    browser: {
+      name: String,
+      version: String
+    },
+    os: {
+      name: String,
+      version: String
+    },
+    location: {
+      country: String,
+      region: String,
+      city: String,
+      timezone: String
+    }
   }],
   createdAt: {
     type: Date,

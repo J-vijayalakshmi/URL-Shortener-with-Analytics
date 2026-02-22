@@ -3,6 +3,7 @@ const router = express.Router();
 const shortid = require('shortid');
 const validUrl = require('valid-url');
 const Url = require('../models/Url');
+const redisClient = require('../config/redis');
 
 // Create short URL
 router.post('/shorten', async (req, res) => {
@@ -18,6 +19,18 @@ router.post('/shorten', async (req, res) => {
     let url = await Url.findOne({ originalUrl });
     
     if (url) {
+      // Cache existing URL
+      try {
+        const cacheKey = `url:${url.shortCode}`;
+        await redisClient.setEx(
+          cacheKey,
+          parseInt(process.env.CACHE_EXPIRY) || 3600,
+          url.originalUrl
+        );
+      } catch (redisError) {
+        console.error('Redis cache error:', redisError);
+      }
+      
       return res.json({
         originalUrl: url.originalUrl,
         shortUrl: `${process.env.BASE_URL}/${url.shortCode}`,
@@ -35,6 +48,19 @@ router.post('/shorten', async (req, res) => {
     });
 
     await url.save();
+
+    // Cache the new URL immediately
+    try {
+      const cacheKey = `url:${shortCode}`;
+      await redisClient.setEx(
+        cacheKey,
+        parseInt(process.env.CACHE_EXPIRY) || 3600,
+        originalUrl
+      );
+      console.log('💾 Cached new URL:', shortCode);
+    } catch (redisError) {
+      console.error('Redis cache error:', redisError);
+    }
 
     res.json({
       originalUrl: url.originalUrl,
