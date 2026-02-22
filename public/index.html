@@ -355,6 +355,62 @@
       font-size: 0.85em;
     }
 
+    .header-auth {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 15px;
+    }
+
+    .auth-buttons {
+      display: flex;
+      gap: 10px;
+    }
+
+    .btn-link {
+      padding: 8px 16px;
+      background: white;
+      color: #1e40af;
+      border: 1px solid #1e40af;
+      border-radius: 6px;
+      font-size: 13px;
+      font-weight: 500;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      text-decoration: none;
+      display: inline-block;
+    }
+
+    .btn-link:hover {
+      background: #dbeafe;
+    }
+
+    .user-info {
+      font-size: 13px;
+      color: #6b7280;
+      display: flex;
+      gap: 10px;
+      align-items: center;
+    }
+
+    .qr-code {
+      text-align: center;
+      margin-top: 15px;
+      padding-top: 15px;
+      border-top: 1px solid #e5e7eb;
+    }
+
+    .qr-code img {
+      max-width: 150px;
+      margin: 10px auto;
+    }
+
+    .qr-code h4 {
+      font-size: 13px;
+      color: #6b7280;
+      margin-bottom: 10px;
+    }
+
     @media (max-width: 968px) {
       .container {
         grid-template-columns: 1fr;
@@ -386,6 +442,22 @@
   <div class="container">
     <!-- LEFT PANEL: URL Shortener -->
     <div class="left-panel">
+      <!-- Header with Auth -->
+      <div class="header-auth">
+        <div></div> <!-- Spacer -->
+        <div id="authSection">
+          <div class="auth-buttons" id="guestButtons">
+            <a href="/login.html" class="btn-link">Login</a>
+            <a href="/signup.html" class="btn-link">Sign Up</a>
+          </div>
+          <div class="user-info" id="userInfo" style="display: none;">
+            <span id="userName"></span>
+            <a href="/dashboard.html" class="btn-link">Dashboard</a>
+            <button class="btn-link" onclick="logout()">Logout</button>
+          </div>
+        </div>
+      </div>
+
       <div class="logo">
         <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
           <path d="M10 13C10.4295 13.5741 10.9774 14.0491 11.6066 14.3929C12.2357 14.7367 12.9315 14.9411 13.6467 14.9923C14.3618 15.0435 15.0796 14.9403 15.7513 14.6897C16.4231 14.4392 17.0331 14.047 17.54 13.54L20.54 10.54C21.4508 9.59695 21.9548 8.33394 21.9434 7.02296C21.932 5.71198 21.4061 4.45791 20.4791 3.53087C19.5521 2.60383 18.298 2.07799 16.987 2.0666C15.676 2.05521 14.413 2.55918 13.47 3.47L11.75 5.18" stroke="#1e40af" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
@@ -402,6 +474,14 @@
           <input type="text" id="originalUrl" placeholder="https://example.com/your-very-long-url-here">
         </div>
       </div>
+
+      <div class="input-group" id="customAliasGroup" style="display: none;">
+        <label for="customAlias">Custom Alias (Optional)</label>
+        <div class="input-wrapper">
+          <input type="text" id="customAlias" placeholder="my-custom-link" pattern="[a-zA-Z0-9-_]+" minlength="3" maxlength="20">
+        </div>
+        <p style="margin-top: 4px; font-size: 12px; color: #9ca3af;">3-20 characters. Letters, numbers, hyphens, and underscores only.</p>
+      </div>
       
       <button class="btn-primary" onclick="shortenUrl()">Shorten URL</button>
       
@@ -412,6 +492,10 @@
         <div class="url-box">
           <div class="url-display" id="shortUrl"></div>
           <button class="copy-btn" onclick="copyUrl(event)">Copy</button>
+        </div>
+        <div class="qr-code" id="qrCode" style="display: none;">
+          <h4>Scan QR Code</h4>
+          <img id="qrImage" src="" alt="QR Code">
         </div>
         <p style="margin-top: 10px; font-size: 12px; color: #9ca3af;">Click the link to test redirection, then view analytics on the right</p>
       </div>
@@ -446,33 +530,87 @@
 
   <script>
     let currentShortCode = '';
+    let currentQRCode = '';
+
+    // Check authentication status
+    function checkAuth() {
+      const token = localStorage.getItem('token');
+      const user = JSON.parse(localStorage.getItem('user') || '{}');
+      
+      if (token && user.name) {
+        document.getElementById('guestButtons').style.display = 'none';
+        document.getElementById('userInfo').style.display = 'flex';
+        document.getElementById('userName').textContent = user.name;
+        document.getElementById('customAliasGroup').style.display = 'block';
+      } else {
+        document.getElementById('guestButtons').style.display = 'flex';
+        document.getElementById('userInfo').style.display = 'none';
+        document.getElementById('customAliasGroup').style.display = 'none';
+      }
+    }
+
+    function logout() {
+      localStorage.removeItem('token');
+      localStorage.removeItem('user');
+      window.location.reload();
+    }
 
     async function shortenUrl() {
       const originalUrl = document.getElementById('originalUrl').value;
+      const customAlias = document.getElementById('customAlias').value;
       const errorDiv = document.getElementById('error');
       const resultDiv = document.getElementById('result');
+      const qrCodeDiv = document.getElementById('qrCode');
+      const token = localStorage.getItem('token');
       
       if (!originalUrl) {
         showError('Please enter a URL');
         return;
       }
 
+      const headers = {
+        'Content-Type': 'application/json'
+      };
+
+      if (token) {
+        headers['Authorization'] = `Bearer ${token}`;
+      }
+
       try {
+        const body = { originalUrl };
+        if (customAlias) {
+          body.customAlias = customAlias;
+        }
+
         const response = await fetch('/api/shorten', {
           method: 'POST',
-          headers: {
-            'Content-Type': 'application/json'
-          },
-          body: JSON.stringify({ originalUrl })
+          headers: headers,
+          body: JSON.stringify(body)
         });
 
         const data = await response.json();
 
         if (response.ok) {
           document.getElementById('shortUrl').textContent = data.shortUrl;
-          currentShortCode = data.shortCode;
+          currentShortCode = data.shortCode || data.customAlias;
+          currentQRCode = data.qrCode;
+          
+          // Show QR code if available
+          if (data.qrCode) {
+            document.getElementById('qrImage').src = data.qrCode;
+            qrCodeDiv.style.display = 'block';
+          } else {
+            qrCodeDiv.style.display = 'none';
+          }
+          
           resultDiv.classList.add('show');
           errorDiv.classList.remove('show');
+          
+          // Clear custom alias field
+          if (customAlias) {
+            document.getElementById('customAlias').value = '';
+          }
+          
           // Auto-load analytics
           viewAnalytics();
         } else {
@@ -604,6 +742,9 @@
         shortenUrl();
       }
     });
+
+    // Check auth on page load
+    checkAuth();
   </script>
 </body>
 </html>

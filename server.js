@@ -2,7 +2,9 @@ require('dotenv').config();
 const express = require('express');
 const mongoose = require('mongoose');
 const path = require('path');
+const rateLimit = require('express-rate-limit');
 const urlRoutes = require('./routes/url');
+const authRoutes = require('./routes/auth');
 const redisClient = require('./config/redis');
 const UAParser = require('ua-parser-js');
 const geoip = require('geoip-lite');
@@ -14,13 +16,36 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(express.static('public'));
 
+// Rate limiting middleware
+const limiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 minutes
+  max: 100, // Limit each IP to 100 requests per windowMs
+  message: { error: 'Too many requests, please try again later' },
+  standardHeaders: true,
+  legacyHeaders: false,
+});
+
+// Apply rate limiting to API routes
+app.use('/api', limiter);
+
+// Specific rate limit for URL shortening (stricter)
+const shortenLimiter = rateLimit({
+  windowMs: 60 * 60 * 1000, // 1 hour
+  max: 20, // Max 20 short URLs per hour per IP
+  message: { error: 'Too many URLs created, please try again later' },
+});
+
 // Database connection
 mongoose.connect(process.env.MONGODB_URI)
   .then(() => console.log('✅ Connected to MongoDB'))
   .catch(err => console.error('❌ MongoDB connection error:', err));
 
 // Routes
+app.use('/api/auth', authRoutes);
 app.use('/api', urlRoutes);
+
+// Apply stricter rate limit to shorten endpoint
+app.use('/api/shorten', shortenLimiter);
 
 // Serve home page
 app.get('/', (req, res) => {
@@ -47,12 +72,22 @@ app.get('/:shortCode', async (req, res) => {
     let url;
     
     if (cachedUrl) {
-      // Cache hit! Parse the cached data
-      url = await Url.findOne({ shortCode });
+      // Cache hit! Find the URL document
+      url = await Url.findOne({
+        $or: [
+          { shortCode },
+          { customAlias: shortCode }
+        ]
+      });
       console.log('✅ Cache HIT for:', shortCode);
     } else {
-      // Cache miss - query database
-      url = await Url.findOne({ shortCode });
+      // Cache miss - query database (support both shortCode and customAlias)
+      url = await Url.findOne({
+        $or: [
+          { shortCode },
+          { customAlias: shortCode }
+        ]
+      });
       console.log('❌ Cache MISS for:', shortCode);
       
       if (url) {

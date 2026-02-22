@@ -10,6 +10,19 @@ const urlSchema = new mongoose.Schema({
     required: true,
     unique: true
   },
+  customAlias: {
+    type: String,
+    unique: true,
+    sparse: true // Allows multiple null values
+  },
+  user: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'User',
+    default: null // Allow anonymous URLs
+  },
+  qrCode: {
+    type: String // Data URL for QR code image
+  },
   clicks: {
     type: Number,
     default: 0
