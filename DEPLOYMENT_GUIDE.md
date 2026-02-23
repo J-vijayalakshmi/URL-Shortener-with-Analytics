@@ -82,8 +82,9 @@ Already configured! Your `package.json` has:
 4. Click "Connect" → "Connect your application"
 5. Copy connection string:
    ```
-   mongodb+srv://username:password@cluster0.xxxxx.mongodb.net/urlshortener
+   mongodb+srv://<USERNAME>:<PASSWORD>@cluster0.xxxxx.mongodb.net/urlshortener
    ```
+   Replace `<USERNAME>` and `<PASSWORD>` with your actual credentials
 6. **Network Access:** Add `0.0.0.0/0` (allow from anywhere)
 7. **Database Access:** Create database user with read/write permissions
 

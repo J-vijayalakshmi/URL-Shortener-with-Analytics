@@ -118,8 +118,8 @@ JWT_SECRET=your-super-secret-jwt-key-change-this-in-production
 ```
 
 **For Production:**
-- Use MongoDB Atlas: `MONGODB_URI=mongodb+srv://user:pass@cluster.mongodb.net/urlshortener`
-- Use Upstash Redis: `REDIS_URL=rediss://default:pass@host.upstash.io:6379`
+- Use MongoDB Atlas: `MONGODB_URI=mongodb+srv://<USERNAME>:<PASSWORD>@cluster.mongodb.net/urlshortener`
+- Use Upstash Redis: `REDIS_URL=rediss://default:<PASSWORD>@<HOST>.upstash.io:6379`
 - Generate strong JWT secret (64+ characters)
 - Update BASE_URL to your production domain
 
