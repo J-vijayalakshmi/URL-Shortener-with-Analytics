@@ -11,6 +11,9 @@ const geoip = require('geoip-lite');
 
 const app = express();
 
+// Trust proxy - required for Railway/Render/Heroku deployments
+app.set('trust proxy', 1);
+
 // Middleware
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
